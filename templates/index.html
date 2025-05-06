@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profit Calculator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Profit Calculator</h1>
+
+    <div class="form">
+        <label>Buy Price (RM):</label>
+        <input type="text" id="buy_price">
+
+        <label>Sell Price (RM):</label>
+        <input type="text" id="sell_price">
+
+        <label>Amount of ADA:</label>
+        <input type="text" id="ada_amount">
+    </div>
+
+    <div id="results" class="results" style="display: none;">
+        <h2>Results:</h2>
+        <p><strong>Total Buy Cost:</strong> RM <span id="buy_cost"></span></p>
+        <p><strong>Total Sell Revenue:</strong> RM <span id="sell_value"></span></p>
+        <p><strong>Net Profit:</strong> RM <span id="profit"></span></p>
+        <p><strong>ROI:</strong> <span id="roi"></span>%</p>
+    </div>
+
+    <script>
+        const inputs = ['buy_price', 'sell_price', 'ada_amount'];
+        inputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', calculate);
+        });
+
+        async function calculate() {
+            const buy = document.getElementById('buy_price').value;
+            const sell = document.getElementById('sell_price').value;
+            const amount = document.getElementById('ada_amount').value;
+
+            if (!buy || !sell || !amount) return;
+
+            try {
+                const res = await fetch('/calculate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ buy_price: buy, sell_price: sell, ada_amount: amount })
+                });
+
+                if (!res.ok) throw new Error();
+
+                const data = await res.json();
+                document.getElementById('buy_cost').textContent = data.buy_cost;
+                document.getElementById('sell_value').textContent = data.sell_value;
+                document.getElementById('profit').textContent = data.profit;
+                document.getElementById('roi').textContent = data.roi;
+
+                const profitElem = document.getElementById('profit');
+                const roiElem = document.getElementById('roi');
+                const resultBox = document.getElementById('results');
+
+                if (data.profit > 0) {
+                    profitElem.style.color = '#00e676';
+                    roiElem.style.color = '#00e676';
+                    resultBox.style.backgroundColor = '#1b3428';
+                } else if (data.profit < 0) {
+                    profitElem.style.color = '#ff5252';
+                    roiElem.style.color = '#ff5252';
+                    resultBox.style.backgroundColor = '#3c1f1f';
+                } else {
+                    profitElem.style.color = '#ccc';
+                    roiElem.style.color = '#ccc';
+                    resultBox.style.backgroundColor = '#2a2a2a';
+                }
+
+                resultBox.style.display = 'block';
+            } catch {
+                document.getElementById('results').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
